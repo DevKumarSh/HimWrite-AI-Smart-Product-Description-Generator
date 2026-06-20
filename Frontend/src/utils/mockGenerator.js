@@ -12,11 +12,11 @@ export function generateProductDescription({ productName, ingredients, weight, f
     ? features.split(/[,\n]+/).map(f => f.trim()).filter(Boolean)
     : ["Meticulously sourced", "Quality assured", "Expertly prepared"];
 
-  let title = "";
-  let tagline = "";
-  let description = "";
-  let bullets = [];
-  let callToAction = "";
+  let title;
+  let tagline;
+  let description;
+  let bullets;
+  let callToAction;
 
   const ingredientsString = ingList.length > 0 ? ingList.join(", ") : "Premium ingredients";
 

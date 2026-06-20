@@ -1,9 +1,4 @@
 {
-<<<<<<< HEAD
-  "dependencies": {
-    "@tailwindcss/vite": "^4.3.1",
-    "tailwindcss": "^4.3.1"
-=======
   "name": "himwrite",
   "private": true,
   "version": "0.0.0",
@@ -31,6 +26,5 @@
     "globals": "^17.6.0",
     "tailwindcss": "^4.3.1",
     "vite": "^8.0.12"
->>>>>>> bb064a6bb3a461223a20e1ef81fbc88ed3b8d7c0
   }
 }
