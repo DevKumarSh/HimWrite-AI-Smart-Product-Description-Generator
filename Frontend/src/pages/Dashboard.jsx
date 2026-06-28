@@ -3,7 +3,7 @@ import Sidebar from "../components/Sidebar";
 import ProductForm from "../components/ProductForm";
 import DescriptionOutput from "../components/DescriptionOutput";
 import EmptyState from "../components/EmptyState";
-import { generateProductDescription } from "../utils/mockGenerator";
+
 import logo from "../assets/logo.png";
 import { 
   History as HistoryIcon, 
@@ -31,6 +31,7 @@ function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   // Settings mock state
   const [apiKey, setApiKey] = useState("hw_live_••••••••••••••••••••");
@@ -41,13 +42,27 @@ function Dashboard() {
     localStorage.setItem("himwrite_history", JSON.stringify(newHistory));
   };
 
-  const handleGenerate = (formData) => {
+  const handleGenerate = async (formData) => {
     setIsGenerating(true);
     setLastFormData(formData);
     
-    // Simulate generation delay
-    setTimeout(() => {
-      const generated = generateProductDescription(formData);
+    try {
+      // Use apiKey from settings if provided, otherwise the backend will use its .env key
+      const response = await fetch("http://127.0.0.1:5000/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(apiKey && apiKey !== "hw_live_••••••••••••••••••••" ? { "Authorization": `Bearer ${apiKey}` } : {})
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate description");
+      }
+
+      const generated = await response.json();
+      
       const newRecord = {
         id: Date.now().toString(),
         timestamp: new Date().toLocaleString(),
@@ -58,8 +73,13 @@ function Dashboard() {
       const updatedHistory = [newRecord, ...history];
       saveHistoryToStorage(updatedHistory);
       setCurrentResult(newRecord);
+    } catch (error) {
+      console.error("Error calling API:", error);
+      // Fallback or error handling
+      alert("Failed to generate description. Please ensure the backend is running.");
+    } finally {
       setIsGenerating(false);
-    }, 1500);
+    }
   };
 
   const handleRegenerate = () => {
@@ -69,10 +89,9 @@ function Dashboard() {
   };
 
   const handleClearHistory = () => {
-    if (window.confirm("Are you sure you want to clear all history?")) {
-      saveHistoryToStorage([]);
-      setCurrentResult(null);
-    }
+    saveHistoryToStorage([]);
+    setCurrentResult(null);
+    setConfirmClear(false);
   };
 
   const handleDeleteHistoryItem = (id) => {
@@ -128,13 +147,34 @@ function Dashboard() {
           <p className="text-xs text-slate-500 mt-1 font-semibold">Access past generated product marketing copy templates.</p>
         </div>
         {history.length > 0 && (
-          <button
-            onClick={handleClearHistory}
-            className="flex items-center gap-2 px-4 py-2.5 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl transition cursor-pointer select-none"
-          >
-            <Trash2 size={14} />
-            Clear Log
-          </button>
+          <div className="flex items-center gap-2">
+            {confirmClear ? (
+              <>
+                <span className="text-xs font-bold text-slate-500">Clear all history?</span>
+                <button
+                  onClick={handleClearHistory}
+                  className="flex items-center gap-1.5 px-3.5 py-2 border border-rose-400 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition cursor-pointer select-none"
+                >
+                  <Trash2 size={13} />
+                  Yes, Clear
+                </button>
+                <button
+                  onClick={() => setConfirmClear(false)}
+                  className="px-3.5 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold rounded-xl transition cursor-pointer select-none"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setConfirmClear(true)}
+                className="flex items-center gap-2 px-4 py-2.5 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl transition cursor-pointer select-none"
+              >
+                <Trash2 size={14} />
+                Clear Log
+              </button>
+            )}
+          </div>
         )}
       </div>
 
