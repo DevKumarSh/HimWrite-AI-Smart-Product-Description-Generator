@@ -31,6 +31,7 @@ function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   // Settings mock state
   const [apiKey, setApiKey] = useState("hw_live_••••••••••••••••••••");
@@ -69,10 +70,9 @@ function Dashboard() {
   };
 
   const handleClearHistory = () => {
-    if (window.confirm("Are you sure you want to clear all history?")) {
-      saveHistoryToStorage([]);
-      setCurrentResult(null);
-    }
+    saveHistoryToStorage([]);
+    setCurrentResult(null);
+    setConfirmClear(false);
   };
 
   const handleDeleteHistoryItem = (id) => {
@@ -128,13 +128,34 @@ function Dashboard() {
           <p className="text-xs text-slate-500 mt-1 font-semibold">Access past generated product marketing copy templates.</p>
         </div>
         {history.length > 0 && (
-          <button
-            onClick={handleClearHistory}
-            className="flex items-center gap-2 px-4 py-2.5 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl transition cursor-pointer select-none"
-          >
-            <Trash2 size={14} />
-            Clear Log
-          </button>
+          <div className="flex items-center gap-2">
+            {confirmClear ? (
+              <>
+                <span className="text-xs font-bold text-slate-500">Clear all history?</span>
+                <button
+                  onClick={handleClearHistory}
+                  className="flex items-center gap-1.5 px-3.5 py-2 border border-rose-400 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition cursor-pointer select-none"
+                >
+                  <Trash2 size={13} />
+                  Yes, Clear
+                </button>
+                <button
+                  onClick={() => setConfirmClear(false)}
+                  className="px-3.5 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold rounded-xl transition cursor-pointer select-none"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setConfirmClear(true)}
+                className="flex items-center gap-2 px-4 py-2.5 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl transition cursor-pointer select-none"
+              >
+                <Trash2 size={14} />
+                Clear Log
+              </button>
+            )}
+          </div>
         )}
       </div>
 
