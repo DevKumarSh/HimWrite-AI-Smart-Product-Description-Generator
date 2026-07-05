@@ -1,4 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Product = require('../models/Product');
 
 const generateDescription = async (req, res) => {
   try {
@@ -15,13 +16,21 @@ const generateDescription = async (req, res) => {
     if (!apiKey || apiKey === 'your_gemini_api_key_here') {
       console.warn("WARNING: GEMINI_API_KEY is not set or invalid. Using a mock response for testing.");
       // Fallback for testing if key is not configured
-      return res.json({
+      const mockResult = {
         title: `${tone.charAt(0).toUpperCase() + tone.slice(1)} ${productName}`,
         tagline: `Experience the exceptional quality of our ${productName}.`,
         description: `Carefully crafted with ${ingredients || 'the finest materials'} to ensure an unforgettable experience. Features: ${features || 'Premium quality'}. Size/Weight: ${weight || 'Standard'}.`,
         bullets: ["Premium quality", "Exceptional value", "Satisfaction guaranteed"],
         callToAction: "Order now and experience the difference!"
+      };
+      
+      const savedProduct = new Product({
+        inputs: { productName, ingredients, weight, features, tone },
+        result: mockResult
       });
+      await savedProduct.save();
+
+      return res.json(savedProduct);
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -58,7 +67,20 @@ const generateDescription = async (req, res) => {
 
     const jsonResult = JSON.parse(text);
 
-    res.json(jsonResult);
+    // Save to database
+    const savedProduct = new Product({
+      inputs: {
+        productName,
+        ingredients,
+        weight,
+        features,
+        tone
+      },
+      result: jsonResult
+    });
+    await savedProduct.save();
+
+    res.json(savedProduct);
   } catch (error) {
     console.error('Error generating description:', error);
     res.status(500).json({ error: 'Failed to generate description' });
