@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import ProductForm from "../components/ProductForm";
 import DescriptionOutput from "../components/DescriptionOutput";
@@ -12,35 +12,46 @@ import {
   ShieldCheck, 
   Copy,
   Check,
-  Menu
+  Menu,
+  Search
 } from "lucide-react";
 
 function Dashboard() {
   const [currentTab, setCurrentTab] = useState("dashboard");
-  const [history, setHistory] = useState(() => {
-    try {
-      const savedHistory = localStorage.getItem("himwrite_history");
-      return savedHistory ? JSON.parse(savedHistory) : [];
-    } catch (e) {
-      console.error("Failed to parse history from localStorage", e);
-      return [];
-    }
-  });
+  const [history, setHistory] = useState([]);
   const [currentResult, setCurrentResult] = useState(null);
   const [lastFormData, setLastFormData] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Settings mock state
   const [apiKey, setApiKey] = useState("hw_live_••••••••••••••••••••");
   const [saveLocal, setSaveLocal] = useState(true);
 
-  const saveHistoryToStorage = (newHistory) => {
-    setHistory(newHistory);
-    localStorage.setItem("himwrite_history", JSON.stringify(newHistory));
+  const fetchHistory = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/history");
+      if (response.ok) {
+        const data = await response.json();
+        const formattedData = data.map(item => ({
+          id: item._id,
+          timestamp: new Date(item.createdAt).toLocaleString(),
+          inputs: item.inputs,
+          result: item.result
+        }));
+        setHistory(formattedData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch history:", error);
+    }
   };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
 
   const handleGenerate = async (formData) => {
     setIsGenerating(true);
@@ -64,14 +75,14 @@ function Dashboard() {
       const generated = await response.json();
       
       const newRecord = {
-        id: Date.now().toString(),
-        timestamp: new Date().toLocaleString(),
-        inputs: formData,
-        result: generated
+        id: generated._id,
+        timestamp: new Date(generated.createdAt).toLocaleString(),
+        inputs: generated.inputs,
+        result: generated.result
       };
 
       const updatedHistory = [newRecord, ...history];
-      saveHistoryToStorage(updatedHistory);
+      setHistory(updatedHistory);
       setCurrentResult(newRecord);
     } catch (error) {
       console.error("Error calling API:", error);
@@ -88,17 +99,27 @@ function Dashboard() {
     }
   };
 
-  const handleClearHistory = () => {
-    saveHistoryToStorage([]);
-    setCurrentResult(null);
-    setConfirmClear(false);
+  const handleClearHistory = async () => {
+    try {
+      await fetch("http://127.0.0.1:5000/api/history", { method: "DELETE" });
+      setHistory([]);
+      setCurrentResult(null);
+      setConfirmClear(false);
+    } catch (error) {
+      console.error("Failed to clear history:", error);
+    }
   };
 
-  const handleDeleteHistoryItem = (id) => {
-    const updatedHistory = history.filter(item => item.id !== id);
-    saveHistoryToStorage(updatedHistory);
-    if (currentResult && currentResult.id === id) {
-      setCurrentResult(null);
+  const handleDeleteHistoryItem = async (id) => {
+    try {
+      await fetch(`http://127.0.0.1:5000/api/history/${id}`, { method: "DELETE" });
+      const updatedHistory = history.filter(item => item.id !== id);
+      setHistory(updatedHistory);
+      if (currentResult && currentResult.id === id) {
+        setCurrentResult(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete history item:", error);
     }
   };
 
@@ -139,6 +160,15 @@ function Dashboard() {
     </div>
   );
 
+  const filteredHistory = history.filter(item => {
+    const search = searchQuery.toLowerCase();
+    return (
+      item.inputs.productName.toLowerCase().includes(search) ||
+      item.result.title.toLowerCase().includes(search) ||
+      item.result.description.toLowerCase().includes(search)
+    );
+  });
+
   const renderHistoryView = () => (
     <div className="space-y-6 animate-fadeIn">
       <div className="flex items-center justify-between">
@@ -178,6 +208,21 @@ function Dashboard() {
         )}
       </div>
 
+      {history.length > 0 && (
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search size={16} className="text-slate-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search by product name, title, or description..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+          />
+        </div>
+      )}
+
       {history.length === 0 ? (
         <EmptyState
           icon={HistoryIcon}
@@ -185,9 +230,16 @@ function Dashboard() {
           description="Your generated description items will appear here for easy editing and retrieval."
           variant="slate"
         />
+      ) : filteredHistory.length === 0 ? (
+        <EmptyState
+          icon={Search}
+          title="No Results Found"
+          description="No history matches your search query."
+          variant="slate"
+        />
       ) : (
         <div className="space-y-4">
-          {history.map((item) => (
+          {filteredHistory.map((item) => (
             <div key={item.id} className="bg-white border border-slate-200/60 rounded-2xl p-5 md:p-6 flex flex-col md:flex-row md:items-start justify-between gap-6 transition hover:shadow-md">
               <div className="space-y-3 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
