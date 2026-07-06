@@ -33,9 +33,29 @@ const clearHistory = async (req, res) => {
     res.status(500).json({ error: 'Failed to clear history' });
   }
 };
+// Update a specific history item
+const updateHistoryItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { result } = req.body; // Expecting the updated result object
+    const updatedItem = await Product.findByIdAndUpdate(
+      id,
+      { $set: { result } },
+      { new: true }
+    );
+    if (!updatedItem) {
+      return res.status(404).json({ error: 'History item not found' });
+    }
+    res.json(updatedItem);
+  } catch (error) {
+    console.error('Error updating history item:', error);
+    res.status(500).json({ error: 'Failed to update history item' });
+  }
+};
 
 module.exports = {
   getHistory,
   deleteHistoryItem,
-  clearHistory
+  clearHistory,
+  updateHistoryItem
 };

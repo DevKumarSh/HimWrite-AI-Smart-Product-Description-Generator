@@ -123,6 +123,36 @@ function Dashboard() {
     }
   };
 
+  const handleUpdate = async (id, updatedResult) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/api/history/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ result: updatedResult })
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to update description");
+      }
+      
+      const updatedItem = await response.json();
+      
+      const updatedHistory = history.map(item => 
+        item.id === id ? { ...item, result: updatedItem.result } : item
+      );
+      setHistory(updatedHistory);
+      
+      if (currentResult && currentResult.id === id) {
+        setCurrentResult({ ...currentResult, result: updatedItem.result });
+      }
+    } catch (error) {
+      console.error("Failed to update item:", error);
+      alert("Failed to update item.");
+    }
+  };
+
   const copyToClipboard = async (text, id) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -153,9 +183,11 @@ function Dashboard() {
 
       {/* Description Output spanning full width */}
       <DescriptionOutput 
+        id={currentResult?.id}
         result={currentResult?.result} 
         isGenerating={isGenerating} 
         onRegenerate={handleRegenerate}
+        onUpdate={handleUpdate}
       />
     </div>
   );
