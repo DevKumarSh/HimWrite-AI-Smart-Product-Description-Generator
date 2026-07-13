@@ -3,7 +3,7 @@ const Product = require('../models/Product');
 // Get all history
 const getHistory = async (req, res) => {
   try {
-    const history = await Product.find().sort({ createdAt: -1 });
+    const history = await Product.find({ user: req.user._id }).sort({ createdAt: -1 });
     res.json(history);
   } catch (error) {
     console.error('Error fetching history:', error);
@@ -15,7 +15,8 @@ const getHistory = async (req, res) => {
 const deleteHistoryItem = async (req, res) => {
   try {
     const { id } = req.params;
-    await Product.findByIdAndDelete(id);
+    const item = await Product.findOneAndDelete({ _id: id, user: req.user._id });
+    if (!item) return res.status(404).json({ error: 'Not found or not authorized' });
     res.json({ message: 'History item deleted' });
   } catch (error) {
     console.error('Error deleting history item:', error);
@@ -26,7 +27,7 @@ const deleteHistoryItem = async (req, res) => {
 // Clear all history
 const clearHistory = async (req, res) => {
   try {
-    await Product.deleteMany({});
+    await Product.deleteMany({ user: req.user._id });
     res.json({ message: 'All history cleared' });
   } catch (error) {
     console.error('Error clearing history:', error);
@@ -38,8 +39,8 @@ const updateHistoryItem = async (req, res) => {
   try {
     const { id } = req.params;
     const { result } = req.body; // Expecting the updated result object
-    const updatedItem = await Product.findByIdAndUpdate(
-      id,
+    const updatedItem = await Product.findOneAndUpdate(
+      { _id: id, user: req.user._id },
       { $set: { result } },
       { new: true }
     );
