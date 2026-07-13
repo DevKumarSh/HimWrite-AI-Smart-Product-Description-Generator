@@ -3,6 +3,7 @@ import Sidebar from "../components/Sidebar";
 import ProductForm from "../components/ProductForm";
 import DescriptionOutput from "../components/DescriptionOutput";
 import EmptyState from "../components/EmptyState";
+import authApi from "../services/authApi";
 
 import logo from "../assets/logo.png";
 import { 
@@ -33,17 +34,15 @@ function Dashboard() {
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/history");
-      if (response.ok) {
-        const data = await response.json();
-        const formattedData = data.map(item => ({
-          id: item._id,
-          timestamp: new Date(item.createdAt).toLocaleString(),
-          inputs: item.inputs,
-          result: item.result
-        }));
-        setHistory(formattedData);
-      }
+      const response = await authApi.get("/history");
+      const data = response.data;
+      const formattedData = data.map(item => ({
+        id: item._id,
+        timestamp: new Date(item.createdAt).toLocaleString(),
+        inputs: item.inputs,
+        result: item.result
+      }));
+      setHistory(formattedData);
     } catch (error) {
       console.error("Failed to fetch history:", error);
     }
@@ -58,21 +57,8 @@ function Dashboard() {
     setLastFormData(formData);
     
     try {
-      // Use apiKey from settings if provided, otherwise the backend will use its .env key
-      const response = await fetch("http://127.0.0.1:5000/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(apiKey && apiKey !== "hw_live_••••••••••••••••••••" ? { "Authorization": `Bearer ${apiKey}` } : {})
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to generate description");
-      }
-
-      const generated = await response.json();
+      const response = await authApi.post("/generate", formData);
+      const generated = response.data;
       
       const newRecord = {
         id: generated._id,
@@ -101,7 +87,7 @@ function Dashboard() {
 
   const handleClearHistory = async () => {
     try {
-      await fetch("http://127.0.0.1:5000/api/history", { method: "DELETE" });
+      await authApi.delete("/history");
       setHistory([]);
       setCurrentResult(null);
       setConfirmClear(false);
@@ -112,7 +98,7 @@ function Dashboard() {
 
   const handleDeleteHistoryItem = async (id) => {
     try {
-      await fetch(`http://127.0.0.1:5000/api/history/${id}`, { method: "DELETE" });
+      await authApi.delete(`/history/${id}`);
       const updatedHistory = history.filter(item => item.id !== id);
       setHistory(updatedHistory);
       if (currentResult && currentResult.id === id) {
@@ -125,19 +111,8 @@ function Dashboard() {
 
   const handleUpdate = async (id, updatedResult) => {
     try {
-      const response = await fetch(`http://127.0.0.1:5000/api/history/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ result: updatedResult })
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to update description");
-      }
-      
-      const updatedItem = await response.json();
+      const response = await authApi.put(`/history/${id}`, { result: updatedResult });
+      const updatedItem = response.data;
       
       const updatedHistory = history.map(item => 
         item.id === id ? { ...item, result: updatedItem.result } : item
