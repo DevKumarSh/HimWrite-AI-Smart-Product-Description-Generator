@@ -25,6 +25,7 @@ const generateDescription = async (req, res) => {
       };
       
       const savedProduct = new Product({
+        user: req.user._id,
         inputs: { productName, ingredients, weight, features, tone },
         result: mockResult
       });
@@ -69,6 +70,7 @@ const generateDescription = async (req, res) => {
 
     // Save to database
     const savedProduct = new Product({
+      user: req.user._id,
       inputs: {
         productName,
         ingredients,

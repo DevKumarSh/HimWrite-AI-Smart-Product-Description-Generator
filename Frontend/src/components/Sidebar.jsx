@@ -1,7 +1,9 @@
 import logo from "../assets/logo.png";
-import { LayoutDashboard, History, Settings, ChevronDown, User, X } from "lucide-react";
+import { LayoutDashboard, History, Settings, LogOut, User, X } from "lucide-react";
+import { useAuth } from '../context/AuthContext';
 
 function Sidebar({ currentTab, setCurrentTab, isOpen, onClose }) {
+  const { user, logout } = useAuth();
   const menuItems = [
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
     { id: "history", name: "History", icon: History },
@@ -83,18 +85,23 @@ function Sidebar({ currentTab, setCurrentTab, isOpen, onClose }) {
 
         {/* Bottom Profile section */}
         <div className="p-6">
-          {/* Guest User Profile Block (Matches Mockup) */}
           <div className="flex items-center justify-between px-2 pt-4 border-t border-slate-800/80">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-700/50 shadow-inner">
-                <User size={18} />
-              </div>
+              {user?.profileImage ? (
+                <img src={user.profileImage} alt={user.name} className="w-10 h-10 rounded-full border border-slate-700/50 shadow-inner" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-700/50 shadow-inner">
+                  <User size={18} />
+                </div>
+              )}
               <div className="overflow-hidden">
-                <h5 className="text-xs font-bold text-white leading-tight">Guest User</h5>
-                <p className="text-[10px] text-slate-500 truncate font-semibold mt-0.5">guest@example.com</p>
+                <h5 className="text-xs font-bold text-white leading-tight">{user?.name || 'User'}</h5>
+                <p className="text-[10px] text-slate-500 truncate font-semibold mt-0.5">{user?.email || 'user@example.com'}</p>
               </div>
             </div>
-            <ChevronDown size={14} className="text-slate-500 cursor-pointer hover:text-slate-300 transition" />
+            <button onClick={logout} className="text-slate-500 cursor-pointer hover:text-rose-400 transition" title="Logout">
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
 
