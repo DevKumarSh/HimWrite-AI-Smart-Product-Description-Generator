@@ -11,6 +11,7 @@ require('./config/passportSetup');
 
 const apiRoutes = require('./routes/apiRoutes');
 const authRoutes = require('./routes/authRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -41,6 +42,7 @@ mongoose.connect(process.env.MONGO_URI)
 // Routes
 app.use('/api', apiRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Basic health check route
 app.get('/', (req, res) => {
