@@ -66,7 +66,6 @@ function Sidebar({ currentTab, setCurrentTab, isOpen, onClose }) {
                   key={item.id}
                   onClick={() => {
                     setCurrentTab(item.id);
-                    // Close sidebar on mobile after clicking
                     if (onClose) onClose();
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer select-none active:scale-[0.99] ${
@@ -99,7 +98,11 @@ function Sidebar({ currentTab, setCurrentTab, isOpen, onClose }) {
                 <p className="text-[10px] text-slate-500 truncate font-semibold mt-0.5">{user?.email || 'user@example.com'}</p>
               </div>
             </div>
-            <button onClick={logout} className="text-slate-500 cursor-pointer hover:text-rose-400 transition" title="Logout">
+            <button
+              onClick={logout}
+              className="text-slate-500 cursor-pointer hover:text-rose-400 transition"
+              title="Logout"
+            >
               <LogOut size={16} />
             </button>
           </div>
