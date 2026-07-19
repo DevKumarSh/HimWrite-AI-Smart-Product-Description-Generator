@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowRight, Chrome } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Chrome, CheckCircle } from 'lucide-react';
 import logo from '../assets/logo.png';
 import toast from 'react-hot-toast';
 
@@ -10,6 +10,8 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const { login } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const location = useLocation();
+  const loggedOut = location.state?.loggedOut;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -59,6 +61,14 @@ const Login = () => {
             <h2 className="text-2xl font-bold text-slate-800 mb-1">Sign in</h2>
             <p className="text-slate-500 text-sm">Access your dashboard</p>
           </div>
+
+          {/* Logout Success Banner */}
+          {loggedOut && (
+            <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 mb-5">
+              <CheckCircle size={16} className="shrink-0" />
+              <p className="text-xs font-semibold">You have been logged out successfully.</p>
+            </div>
+          )}
 
           <button
             onClick={handleGoogleLogin}

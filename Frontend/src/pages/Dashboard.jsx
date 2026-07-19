@@ -4,6 +4,7 @@ import ProductForm from "../components/ProductForm";
 import DescriptionOutput from "../components/DescriptionOutput";
 import EmptyState from "../components/EmptyState";
 import authApi from "../services/authApi";
+import toast from "react-hot-toast";
 
 import logo from "../assets/logo.png";
 import { 
@@ -57,23 +58,53 @@ function Dashboard() {
     setLastFormData(formData);
     
     try {
-      const response = await authApi.post("/generate", formData);
-      const generated = response.data;
+      const response = await authApi.post("/ai/generate", formData);
+      const { success, data: generated } = response.data;
       
-      const newRecord = {
-        id: generated._id,
-        timestamp: new Date(generated.createdAt).toLocaleString(),
-        inputs: generated.inputs,
-        result: generated.result
-      };
+      if (success && generated) {
+        const newRecord = {
+          id: generated._id,
+          timestamp: new Date(generated.createdAt).toLocaleString(),
+          inputs: generated.inputs,
+          result: generated.result
+        };
 
-      const updatedHistory = [newRecord, ...history];
-      setHistory(updatedHistory);
-      setCurrentResult(newRecord);
+        const updatedHistory = [newRecord, ...history];
+        setHistory(updatedHistory);
+        setCurrentResult(newRecord);
+        toast.success("Description generated successfully!");
+      }
     } catch (error) {
       console.error("Error calling API:", error);
-      // Fallback or error handling
-      alert("Failed to generate description. Please ensure the backend is running.");
+      if (error.response) {
+        const status = error.response.status;
+        const message = error.response.data?.message || "An error occurred";
+        
+        switch (status) {
+          case 400:
+            toast.error(message);
+            break;
+          case 401:
+            toast.error("Not authorized. Please log in.");
+            break;
+          case 429:
+            toast.error(message);
+            break;
+          case 502:
+            toast.error(message);
+            break;
+          case 504:
+            toast.error(message);
+            break;
+          case 500:
+            toast.error("Something went wrong");
+            break;
+          default:
+            toast.error(message);
+        }
+      } else {
+        toast.error("Failed to generate description. Please check your network.");
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -132,9 +163,11 @@ function Dashboard() {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(id);
+      toast.success("Copied Successfully!");
       setTimeout(() => setCopiedId(null), 2000);
     } catch (err) {
       console.error("Failed to copy", err);
+      toast.error("Failed to copy text.");
     }
   };
 

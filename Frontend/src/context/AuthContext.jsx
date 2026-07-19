@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }) => {
     await logoutUser();
     setUser(null);
     setToken(null);
-    navigate('/login');
+    navigate('/login', { state: { loggedOut: true } });
   };
 
   const value = {
